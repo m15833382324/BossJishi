@@ -1,0 +1,558 @@
+
+<!DOCTYPE html>
+<!-- saved from url=(0042)http://shentu.1996game.cn/api/player/is_1/ -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta chashijianset="utf-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>BOSS计时器</title>
+<link href="./static/layui/css/index.css" rel="stylesheet"
+	type="text/css">
+<link rel="stylesheet" href="./static/layui/css/layui.css">
+<link id="layuicss-layer" rel="stylesheet"
+	href="./static/layui/css/modules/layer/default/layer.css" media="all">
+</head>
+<body>
+	<center>
+		<span class="red">当前：</span><font id="shijian"
+			style="font-size: 32px;">10:05:52</font>
+	</center>
+	<span> </span>
+	<table class="layui-table" lay-size="sm" style="width: 1200px;">
+		<colgroup>
+			<col width="300">
+			<col width="50">
+			<col width="150">
+			<col width="50">
+			<col width="100">
+			<col width="100">
+			<col width="100">
+			<col>
+		</colgroup>
+		<thead>
+			<tr>
+				<th>怪物名</th>
+				<th>倒计时</th>
+				<th>操作</th>
+				<th>死亡时间</th>
+				<th>地图名</th>
+				<th>x</th>
+				<th>y</th>
+				<th>刷新间隔</th>
+			</tr>
+		</thead>
+		<tbody id="show_body">
+		</tbody>
+
+		<tbody>
+			<tr>
+				<td><input type="text" id="new_mob_name"
+					name="new_mob_name&#39;" placeholder="请输入怪物名" class="layui-input"></td>
+				<td></td>
+				<td><button id="new_mob"
+						class="layui-btn layui-btn-normal layui-btn-xs">创建</button></td>
+				<td></td>
+				<td><input type="text" id="new_map_name" name="new_map_name"
+					placeholder="请输入地图名" class="layui-input"></td>
+				<td><input type="text" id="new_x" name="new_x"
+					placeholder="请输入X坐标" class="layui-input"></td>
+				<td><input type="text" id="new_y" name="new_y"
+					placeholder="请输入Y坐标" class="layui-input"></td>
+				<td><input type="text" id="new_flush_time"
+					name="new_flush_time" placeholder="请输入刷新间隔(秒)" class="layui-input"
+					value="3600"></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<form class="layui-form"
+		action="http://shentu.1996game.cn/api/player/is_1/">
+		<div class="layui-form-item">
+			<label class="layui-form-label">死亡</label>
+			<div class="layui-input-inline">
+				<input type="text" name="name" required="" placeholder="死亡校准时间(秒)"
+					autocomplete="off" class="layui-input" value="0">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">捡药</label>
+			<div class="layui-input-inline">
+				<input type="text" name="name" required="" placeholder="捡药校准时间(秒)"
+					autocomplete="off" class="layui-input" value="120">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">尸体</label>
+			<div class="layui-input-inline">
+				<input type="text" name="name" required="" placeholder="尸体消失校准时间(秒)"
+					autocomplete="off" class="layui-input" value="180">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<label class="layui-form-label">物品</label>
+			<div class="layui-input-inline">
+				<input type="text" name="name" required="" placeholder="物品消失校准时间(秒)"
+					autocomplete="off" class="layui-input" value="300">
+			</div>
+		</div>
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit="" lay-filter="formDemo">
+					<i class="layui-icon layui-icon-edit"></i> 修改
+				</button>
+			</div>
+		</div>
+	</form>
+	<div id="game_adio"></div>
+	<script src="static/layui/layui.js"></script>
+	<script>
+
+var $
+var element
+var form
+var layer
+
+
+function change_mob_time(h, m, s, boss_id) {
+    layer.prompt({title: '请输入时', value: h, formType: 0,}, function (hour, index, elem) {
+        layer.close(index)
+        layer.prompt({title: '请输入分', value: m, formType: 0}, function (minute, index2, elem) {
+            layer.close(index2)
+            layer.prompt({title: '请输入秒', value: s, formType: 0}, function (second, index3, elem) {
+                layer.close(index3)
+                console.log('/api/boss/change_time/?boss_id=' + boss_id + '&hour=' + hour + '&minute=' + minute + '&second=' + second)
+                $.get('/api/boss/change_time/?boss_id=' + boss_id + '&hour=' + hour + '&minute=' + minute + '&second=' + second, function (res2) {
+                  $.ajax({   
+                    url:'/api/app/roominfo/',       
+                    method: 'get',              
+                    dataType:'JSON',               
+                  }).done(function(res) {
+                      flush_body(res)
+                      layer.closeAll()
+                  }).fail(function(res) {
+                      flush_body(res)
+                      layer.closeAll()
+                  });
+                })
+            });
+        });
+    });
+}
+
+
+function change_mob_x(sx, boss_id) {
+    layer.prompt({title: '请输入X坐标', value: sx, formType: 0,}, function (x, index, elem) {
+        layer.close(index)
+        $.get('/api/boss/change_x/?boss_id=' + boss_id + '&x=' + x, function (res2) {
+          $.ajax({   
+            url:'/api/app/roominfo/',       
+            method: 'get',              
+            dataType:'JSON',               
+          }).done(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          }).fail(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          });
+        })
+    });
+}
+
+
+function change_mob_y(sy, boss_id) {
+    layer.prompt({title: '请输入Y坐标', value: sy, formType: 0,}, function (y, index, elem) {
+        layer.close(index)
+        $.get('/api/boss/change_y/?boss_id=' + boss_id + '&y=' + y, function (res2) {
+          $.ajax({   
+            url:'/api/app/roominfo/',       
+            method: 'get',              
+            dataType:'JSON',               
+          }).done(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          }).fail(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          });
+        })
+    });
+}
+
+
+function boss_remove(boss_name, boss_id) {
+    console.log(boss_name, boss_id)
+    layer.confirm('您确认要删除[' + boss_name + ']的记录吗?', {
+        btn: ['确认','取消'] //按钮
+    }, function(){
+      $.ajax({   
+        url:'/api/boss/remove/?boss_id=' + boss_id,       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          $.ajax({   
+            url:'/api/app/roominfo/',       
+            method: 'get',              
+            dataType:'JSON',               
+          }).done(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          }).fail(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          });
+      }).fail(function(res) {
+          $.ajax({   
+            url:'/api/app/roominfo/',       
+            method: 'get',              
+            dataType:'JSON',               
+          }).done(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          }).fail(function(res) {
+              flush_body(res)
+              layer.closeAll()
+          });
+      });
+    }, function(){
+
+    });
+}
+
+
+function boss_si(boss_id) {
+  $.ajax({   
+    url:'/api/boss/update/si/?boss_id=' + boss_id,       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  }).fail(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  });
+}
+
+function boss_jian(boss_id) {
+  $.ajax({   
+    url:'/api/boss/update/jian/?boss_id=' + boss_id,       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  }).fail(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  });
+}
+
+function boss_shi(boss_id) {
+  $.ajax({   
+    url:'/api/boss/update/shi/?boss_id=' + boss_id,       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  }).fail(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  });
+}
+
+function boss_yao(boss_id) {
+  $.ajax({   
+    url:'/api/boss/update/yao/?boss_id=' + boss_id,       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  }).fail(function(res) {
+      $.ajax({   
+        url:'/api/app/roominfo/',       
+        method: 'get',              
+        dataType:'JSON',               
+      }).done(function(res) {
+          flush_body(res)
+      }).fail(function(res) {
+          flush_body(res)
+      });
+  });
+}
+
+
+function create_mob() {
+  var new_mob_name = $('#new_mob_name')
+  var new_map_name = $('#new_map_name')
+  var new_x = $('#new_x')
+  var new_y = $('#new_y')
+  var new_flush_time = $('#new_flush_time')
+
+  var index = layer.load(1)
+  if(!new_mob_name.val()){
+	  layer.tips("怪物名称不能为空！","#new_mob_name");
+	  layer.close(index);
+	  return false;
+  }
+  $.ajax({   
+    url:'/api/boss/create/',       
+    method: 'get',       
+    data: {
+        boss_name: new_mob_name.val(),
+        map_name: new_map_name.val(),
+        x: new_x.val(),
+        y: new_y.val(),
+        flush_time: new_flush_time.val(),
+    },        
+    dataType:'JSON',               
+  }).done(function(res) {
+      layer.close(index)
+  }).fail(function(res) {
+      layer.close(index)
+  });
+}
+
+function flush_body(bosses) {
+    var body = $('#show_body')
+
+    var new_mob_html = '<tr>\n' +
+        '      <td><input type="text" id="new_mob_name" name="new_mob_name" placeholder="怪物名" class="layui-input"></td>\n' +
+        '      <td></td>\n' +
+        '      <td><button id="new_mob" class="layui-btn layui-btn-primary layui-btn-xs">创建</button></td>\n' +
+        '      <td></td>\n' +
+        '      <td><input type="text" id="new_map_name" name="new_map_name" placeholder="地图名" class="layui-input"></td>\n' +
+        '      <td><input type="text" id="new_x" name="new_x" placeholder="X坐标" class="layui-input"></td>\n' +
+        '      <td><input type="text" id="new_y" name="new_y" placeholder="Y坐标" class="layui-input"></td>\n' +
+        '      <td><input type="text" id="new_flush_time" name="new_flush_time" placeholder="刷新间隔(秒)" class="layui-input" value="3600"></td>\n' +
+        '    </tr>'
+
+    var str = ''
+
+    for (var idx in bosses) {
+        var boss = bosses[idx]
+        str += '<tr>'
+        str += '<td>'
+        str += '<button class="layui-btn layui-btn-danger layui-btn-xs" onclick="boss_remove(\'' + boss.name + '\',' + boss.id + ')">' + boss.name + '</button>'
+        str +=' </td>'
+        str += '<td style="width: 100px;">' + boss.daojishi + '</td>'
+        str += '<td>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="boss_si(' + boss.id + ')">死</button>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="boss_jian(' + boss.id + ')">捡</button>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="boss_shi(' + boss.id + ')">尸</button>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="boss_yao(' + boss.id + ')">药</button>'
+        str += '</td>'
+        str += '<td>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="change_mob_time(\'' + boss.hour + '\',\'' + boss.minute + '\',\'' + boss.second + '\',' + boss.id + ')">' + boss.dead_time + '</button>'
+        str +=' </td>'
+        str += '<td>' + boss.map_name + '</td>'
+        str += '<td>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="change_mob_x(\'' + boss.x + '\',' + boss.id + ')">' + (boss.x || "请输入X坐标") + '</button>'
+        str +=' </td>'
+        str += '<td>'
+        str += '<button class="layui-btn layui-btn-normal layui-btn-xs" onclick="change_mob_y(\'' + boss.y + '\',' + boss.id + ')">' + (boss.y || "请输入Y坐标") + '</button>'
+        str +=' </td>'
+        str += '<td>' + boss.flush_time + '</td>'
+        str += '</tr>'
+        if (boss.token) {
+            let text = boss.text
+            let url = 'https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/tts?text=' + text + '&appkey=iRWyDUXj7RUC6P6l&token=' + boss.token + '&format=mp3&voice=Aiqi&volume=500&speech_rate=' + boss.speech_rate
+            console.log(url)
+            var myAuto = document.getElementById('game_audio');
+            myAuto.src = url
+            var promise = myAuto.play();
+            if (promise !== undefined) {
+                promise.catch(function () {
+                    promise = myAuto.play()
+                    // Auto-play was prevented
+                    // Show a UI element to let the user manually start playback
+                }).then(function () {
+                    promise = myAuto.play()
+                    // Auto-play started
+                });
+            }
+        }
+   }
+    // str += new_mob_html
+
+    body.html(str)
+
+    // $('#new_mob').on('click', create_mob)
+}
+
+// 刷新房间信息
+function flush_room() {
+  $.ajax({   
+    url:'/api/app/roominfo/',       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      flush_body(res)
+      setTimeout(flush_room, 1000)
+  }).fail(function(res) {
+      if(typeof res != 'undfined'&&res.messge==""){
+    	  return ;
+      }else{
+/* 		  flush_body(res)
+	      setTimeout(flush_room, 1000) */
+      }
+  });
+}
+
+function flush_time() {
+  $.ajax({   
+    url:'https://quan.suning.com/getSysTime.do',       
+    method: 'get',              
+    dataType:'JSON',               
+  }).done(function(res) {
+      $('#shijian').html(res.sysTime2.split(' ')[1])
+      setTimeout(flush_time, 250)
+  }).fail(function(res) {
+      $('#shijian').html(res.sysTime2.split(' ')[1])
+      setTimeout(flush_time, 250)
+  });
+
+}
+
+//JavaScript代码区域
+layui.use(['jquery', 'form', 'element', 'layer'], function(){
+    $ = layui.$
+    element = layui.element;
+    form = layui.form;
+    layer = layui.layer
+
+    
+    let msgs = []
+    
+    var idx = 0
+    function show_msg() {
+        if (msgs.length) {
+            layer.msg(msgs[idx], {
+                icon: 6
+                ,time: 1000 / msgs.length
+               ,end: function(index, layero){
+                   idx += 1
+                   layer.close(index)
+                    if (idx < msgs.length) {
+                      show_msg()
+                   }
+               }
+          });
+      }
+    }
+    show_msg()
+
+    flush_room()
+    flush_time()
+
+    $('#new_mob').on('click', create_mob)
+
+    //监听提交
+    form.on('submit(formDemo)', function(data){
+      var index = layer.load(1)
+      $.ajax({
+        url:'/api/room/edit/',       
+        method: 'get',       
+        data: data.field,        
+        dataType:'JSON',               
+      }).done(function(res) {
+          layer.close(index)
+          layer.msg(res.responseText, { anim: -1 }, function() {
+            window.location.reload()
+          })
+      }).fail(function(res) {
+          layer.close(index)
+          layer.msg(res.responseText, { anim: -1 }, function() {
+            window.location.reload()
+          })
+      });
+    return false;
+    });
+
+    var myAuto = document.getElementById('game_audio');
+    var promise = myAuto.play();
+    if (promise !== undefined) {
+        promise.catch(function () {
+            promise = myAuto.play()
+            // Auto-play was prevented
+            // Show a UI element to let the user manually start playback
+        }).then(function () {
+            promise = myAuto.play()
+            // Auto-play started
+        });
+    }
+
+
+    var myAuto = document.getElementById('game_audio');
+    var promise = myAuto.play();
+    if (promise !== undefined) {
+        promise.catch(function () {
+            promise = myAuto.play()
+            // Auto-play was prevented
+            // Show a UI element to let the user manually start playback
+        }).then(function () {
+            promise = myAuto.play()
+            // Auto-play started
+        });
+    }
+
+});
+
+</script>
+
+
+</body>
+</html>
